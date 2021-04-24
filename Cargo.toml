@@ -7,6 +7,7 @@ authors = ["quat <quat1024@users.noreply.github.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0"
 winit = "0.24"
 log = "0.4"
 env_logger = "0.7"
