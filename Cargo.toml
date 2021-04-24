@@ -1,0 +1,20 @@
+[package]
+name = "ludum-dare-48"
+version = "0.1.0"
+edition = "2018"
+authors = ["quat <quat1024@users.noreply.github.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+winit = "0.24"
+log = "0.4"
+env_logger = "0.7"
+wgpu = "0.7"
+futures = "0.3"
+bytemuck = { version = "1.5", features = [ "derive" ] }
+image = "0.23.14"
+
+[build-dependencies]
+anyhow = "1.0"
+shaderc = "0.7"

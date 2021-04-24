@@ -1,0 +1,5 @@
+# I don't actually use this editorconfig, but github does!
+
+[*.rs]
+indent_style=space
+indent_size=4
