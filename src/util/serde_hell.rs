@@ -9,7 +9,7 @@ pub struct NotVec2 {
 	y: f32,
 }
 
-/// This is ALLLL because serde's "with" attributes work for fields of type X but not Z<X> even if Z is serializable
+/// This is ALLLL because serde's "with" attributes works for fields of type X but not Z<X> even if Z is serializable
 pub mod vec_of_vec2 {
 	use serde::de::SeqAccess;
 	use serde::de::Visitor;
@@ -26,7 +26,6 @@ pub mod vec_of_vec2 {
 	{
 		let mut y = s.serialize_seq(Some(things.len()))?;
 		for thing in things {
-			//*sigh* I can't figure out how to do this a nicer way
 			let yeet: AlsoNotVec2 = thing.into();
 			y.serialize_element(&yeet)?;
 		}
@@ -40,7 +39,7 @@ pub mod vec_of_vec2 {
 		d.deserialize_seq(Suffering { lkjdkjskdjskd: Vec::new() })
 	}
 
-	//Using remote = whatever makes serde *not actually implement serialize for your struct* so here's another one i guess
+	//Using "remote = whatever" makes serde not *actually* implement serialize for your struct so idk here's another one!!
 	#[derive(Serialize, Deserialize)]
 	pub struct AlsoNotVec2 {
 		x: f32,
