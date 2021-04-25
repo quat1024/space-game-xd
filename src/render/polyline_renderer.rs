@@ -11,7 +11,7 @@ use crate::world::Polyline;
 pub struct PolylineRenderer {
 	vertex_buffer: Buffer,
 	index_buffer: Buffer,
-	index_count: u16,
+	index_count: u32,
 	pipeline: RenderPipeline,
 }
 
@@ -29,7 +29,7 @@ impl Vert {
 
 impl PolylineRenderer {
 	#[allow(dead_code)] //no, it's used, r-a
-	pub const MAX_POLYLINE_VERTS: u32 = 4096; //idk, how big can you make vertex buffers????
+	pub const BUFFER_SIZE: usize = 8192; //idk, how big can you make vertex buffers????
 
 	pub fn new(game_renderer: &GameRendererBits, asset_loader: &AssetLoader) -> Result<Self> {
 		let device = &game_renderer.device;
@@ -43,8 +43,8 @@ impl PolylineRenderer {
 			push_constant_ranges: &[],
 		});
 
-		//Do you need to zero out buffers? Idk this seems the best way
-		let buncha_zeroes = vec![0; Self::MAX_POLYLINE_VERTS as usize * std::mem::size_of::<Vert>()];
+		//Do you need to zero out buffers? Idk seems like a good idea
+		let buncha_zeroes = vec![0; Self::BUFFER_SIZE];
 
 		let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
 			label: Some("Line vertex buffer"),
@@ -87,7 +87,7 @@ impl PolylineRenderer {
 
 	pub fn tesselate<'a>(&'a mut self, queue: &Queue, polylines: &[Polyline]) {
 		let mut vertices: Vec<Vert> = Vec::new();
-		let mut indices: Vec<u16> = Vec::new();
+		let mut indices: Vec<u32> = Vec::new();
 		
 		for polyline in polylines {
 			//Unfortunately I need a new path builder for each polyline
@@ -124,23 +124,24 @@ impl PolylineRenderer {
 			}
 			
 			//since i'll be shoving these into the same buffer, adjust the index buffer to point here
-			let vert_count = vertices.len() as u16;
-			tess_out.indices.iter_mut().for_each(|x| *x += vert_count);
+			//also map to u32 incase there's as hitton of lines (doubt it)
+			let vert_count = vertices.len() as u32;
+			let indices_u32 = tess_out.indices.into_iter().map(|x| (x as u32) + vert_count).collect::<Vec<_>>();
 			
 			vertices.extend_from_slice(&tess_out.vertices);
-			indices.extend_from_slice(&tess_out.indices);
+			indices.extend_from_slice(&indices_u32);
 		}
 		
 		//great now fill the buffers on the GPU
 		queue.write_buffer(&self.vertex_buffer, 0, &bytemuck::cast_slice(&vertices));
 		queue.write_buffer(&self.index_buffer, 0, &bytemuck::cast_slice(&indices));
-		self.index_count = indices.len() as u16;
+		self.index_count = indices.len() as u32;
 	}
 	
 	pub fn render<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
 		render_pass.set_pipeline(&self.pipeline);
 		render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-		render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
+		render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint32);
 		render_pass.draw_indexed(0..self.index_count as u32, 0, 0..1)
 	}
 }
