@@ -1,8 +1,6 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 use anyhow::*;
-use wgpu::ShaderSource;
 
 pub struct AssetLoader {
 	base_path: PathBuf,
@@ -25,5 +23,12 @@ impl AssetLoader {
 			source: wgpu::util::make_spirv(&contents),
 			flags: Default::default(),
 		}))
+	}
+
+	pub fn load_string(&self, name: &str) -> Result<String> {
+		let mut path = self.base_path.clone();
+		path.push(name);
+
+		std::fs::read_to_string(path).with_context(|| format!("failed to load file '{}'", name))
 	}
 }

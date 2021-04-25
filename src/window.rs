@@ -1,5 +1,4 @@
 use anyhow::*;
-use winit::dpi::LogicalSize;
 use winit::event::*;
 use winit::event_loop::ControlFlow;
 use winit::event_loop::EventLoop;

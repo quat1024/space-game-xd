@@ -17,6 +17,8 @@ bytemuck = { version = "1.5", features = [ "derive" ] }
 image = "0.23.14"
 ultraviolet = "0.8"
 lyon = "0.17.5"
+serde = { version = "1.0", features = [ "derive" ] }
+ron = "0.6"
 
 [build-dependencies]
 anyhow = "1.0"

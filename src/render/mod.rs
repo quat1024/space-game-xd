@@ -7,7 +7,6 @@ use self::polyline_renderer::PolylineRenderer;
 use crate::asset_loader::AssetLoader;
 use crate::game::Game;
 use crate::window::GameWindow;
-use crate::world::Polyline;
 
 mod polyline_renderer;
 
@@ -33,27 +32,13 @@ impl GameRenderer {
 		self.bits.recreate_swap_chain()
 	}
 
+	pub fn setup(&mut self, game: &Game) {
+		self.polyline_renderer.tessellate(&self.bits.queue, &game.world.lines);
+	}
+
 	pub fn render(&mut self, _game: &mut Game) -> std::result::Result<(), SwapChainError> {
 		let frame = self.bits.sc.get_current_frame()?.output;
 		let mut encoder = self.bits.device.create_command_encoder(&CommandEncoderDescriptor { label: None });
-
-		//Dont do this every frame in the real game, tessellation takes a (relative) ton of cpu power
-		use ultraviolet::Vec2;
-		use ultraviolet::Vec3;
-		let polyline = Polyline {
-			points: vec![Vec2::new(50.0, 50.0), Vec2::new(150.0, 150.0), Vec2::new(250.0, 50.0), Vec2::new(350.0, 250.0)],
-			color: Vec3::new(0.0, 0.6, 1.0),
-			thickness: 35.0,
-		};
-
-		let polyline2 = Polyline {
-			points: vec![Vec2::new(100.0, 100.0), Vec2::new(200.0, 800.0), Vec2::new(800.0, 200.0), Vec2::new(123.0, 456.0), Vec2::new(0.0, 0.0)],
-			color: Vec3::new(0.2, 0.2, 0.3),
-			thickness: 80.0,
-		};
-
-		self.polyline_renderer.tessellate(&self.bits.queue, &[polyline2, polyline]);
-		//////////////////////////////////////
 
 		//write uniforms (doesn't reallllly need to happen every frame, practically speaking it will, no harm)
 		self.bits.queue.write_buffer(&self.bits.uniform_buffer, 0, bytemuck::cast_slice(&[self.bits.uniforms]));
@@ -67,7 +52,7 @@ impl GameRenderer {
 			}],
 			depth_stencil_attachment: None,
 		});
-		
+
 		// apply global uniforms
 		pass.set_bind_group(0, &self.bits.uniform_bind_group, &[]);
 

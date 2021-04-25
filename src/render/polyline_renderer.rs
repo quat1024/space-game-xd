@@ -4,7 +4,6 @@ use wgpu::*;
 
 use super::GameRendererBits;
 use crate::asset_loader::AssetLoader;
-use crate::world::LineSegment;
 use crate::world::Polyline;
 
 /// A thingie that helps you render lines by tesselatting them into triangles.
@@ -99,7 +98,6 @@ impl PolylineRenderer {
 
 			let path = path_builder.build();
 
-			use lyon::lyon_tessellation;
 			use lyon::lyon_tessellation::*;
 
 			let mut tess_out: VertexBuffers<Vert, u16> = VertexBuffers::new();
