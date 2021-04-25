@@ -1,5 +1,6 @@
 #![feature(array_windows)]
-#![allow(unused_imports)]
+#![allow(unused_imports)] //for now
+#![allow(dead_code)] //for now
 
 use anyhow::*;
 use asset_loader::AssetLoader;

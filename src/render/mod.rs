@@ -38,24 +38,6 @@ impl GameRenderer {
 		let frame = self.bits.sc.get_current_frame()?.output;
 		let mut encoder = self.bits.device.create_command_encoder(&CommandEncoderDescriptor { label: None });
 		
-		let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
-		    label: Some("My Pass"),
-		    color_attachments: &[RenderPassColorAttachmentDescriptor {
-		        attachment: &frame.view,
-		        resolve_target: None,
-		        ops: Operations {
-		            load: LoadOp::Clear(Color {
-		                r: 1.0,
-		                g: 0.5,
-		                b: 0.1,
-		                a: 1.0,
-					}),
-		            store: true,
-				}
-			}],
-		    depth_stencil_attachment: None,
-		});
-		
 		//allocates new vertex buffers every frame DONT DO THIS IN THE REAL GAME!!!! LOLLL
 		use ultraviolet::Vec2;
 		use ultraviolet::Vec3;
@@ -82,7 +64,26 @@ impl GameRenderer {
 		    thickness: 0.2,
 		};
 		
-		self.polyline_renderer.tesselate(&self.bits.device, &[polyline, polyline2]);
+		self.polyline_renderer.tesselate(&self.bits.queue, &[polyline, polyline2]);
+		
+		let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
+		    label: Some("My Pass"),
+		    color_attachments: &[RenderPassColorAttachmentDescriptor {
+		        attachment: &frame.view,
+		        resolve_target: None,
+		        ops: Operations {
+		            load: LoadOp::Clear(Color {
+		                r: 1.0,
+		                g: 0.5,
+		                b: 0.1,
+		                a: 1.0,
+					}),
+		            store: true,
+				}
+			}],
+		    depth_stencil_attachment: None,
+		});
+		
 		self.polyline_renderer.render(&mut pass);
 		
 		drop(pass);
