@@ -114,7 +114,6 @@ impl PolylineBuffer {
 						.with_line_cap(LineCap::Butt)
 						.with_line_join(LineJoin::Miter)
 						.with_miter_limit(500.0)
-						.with_tolerance(0.001) //for now, because i'm working in NDC
 						.with_line_width(polyline.thickness),
 					&mut BuffersBuilder::new(&mut tess_out, |pos: StrokeVertex| Vert { position: pos.position().to_array(), color: polyline.color.into() }),
 				)
