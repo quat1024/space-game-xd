@@ -1,6 +1,7 @@
 use anyhow::*;
 
-use crate::{asset_loader::AssetLoader, world::GameWorld};
+use crate::asset_loader::AssetLoader;
+use crate::world::GameWorld;
 
 pub struct Game {
 	pub world: GameWorld,

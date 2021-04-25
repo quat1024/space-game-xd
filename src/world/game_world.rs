@@ -17,4 +17,3 @@ impl GameWorld {
 		Ok(world)
 	}
 }
-

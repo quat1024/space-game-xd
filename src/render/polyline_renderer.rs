@@ -8,22 +8,7 @@ use crate::world::Polyline;
 
 /// A thingie that helps you render lines by tesselatting them into triangles.
 pub struct PolylineRenderer {
-	vertex_buffer: Buffer,
-	index_buffer: Buffer,
-	index_count: u32,
 	pipeline: RenderPipeline,
-}
-
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-#[repr(C)]
-struct Vert {
-	position: [f32; 2],
-	color: [f32; 3],
-}
-
-impl Vert {
-	#[allow(dead_code)] //no, it's used, r-a
-	pub const LAYOUT: [wgpu::VertexAttribute; 2] = wgpu::vertex_attr_array![0 => Float2, 1 => Float3];
 }
 
 impl PolylineRenderer {
@@ -40,21 +25,6 @@ impl PolylineRenderer {
 			label: Some("Line pipeline layout"),
 			bind_group_layouts: &[&game_renderer.uniform_bind_group_layout],
 			push_constant_ranges: &[],
-		});
-
-		//Do you need to zero out buffers? Idk seems like a good idea
-		let buncha_zeroes = vec![0; Self::BUFFER_SIZE];
-
-		let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-			label: Some("Line vertex buffer"),
-			contents: bytemuck::cast_slice(&buncha_zeroes),
-			usage: BufferUsage::COPY_DST | BufferUsage::VERTEX,
-		});
-
-		let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-			label: Some("Line index buffer"),
-			contents: bytemuck::cast_slice(&buncha_zeroes),
-			usage: BufferUsage::COPY_DST | BufferUsage::INDEX,
 		});
 
 		let buffer_layout = VertexBufferLayout {
@@ -76,9 +46,44 @@ impl PolylineRenderer {
 			multisample: Default::default(),
 		});
 
-		Ok(PolylineRenderer { vertex_buffer, index_buffer, index_count: 0, pipeline })
+		Ok(PolylineRenderer { pipeline })
 	}
 
+	pub fn make_buffers(&self, device: &Device) -> PolylineBuffer {
+		//Do you need to zero out buffers? Idk seems like a good idea
+		let buncha_zeroes = vec![0; Self::BUFFER_SIZE];
+
+		let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+			label: Some("Line vertex buffer"),
+			contents: bytemuck::cast_slice(&buncha_zeroes),
+			usage: BufferUsage::COPY_DST | BufferUsage::VERTEX,
+		});
+
+		let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+			label: Some("Line index buffer"),
+			contents: bytemuck::cast_slice(&buncha_zeroes),
+			usage: BufferUsage::COPY_DST | BufferUsage::INDEX,
+		});
+
+		PolylineBuffer { vertex_buffer, index_buffer, index_count: 0 }
+	}
+
+	/// Assumes bind group 0 is global uniforms
+	pub fn render_buffers<'a>(&'a self, render_pass: &mut RenderPass<'a>, buffer: &'a PolylineBuffer) {
+		render_pass.set_pipeline(&self.pipeline);
+		render_pass.set_vertex_buffer(0, buffer.vertex_buffer.slice(..));
+		render_pass.set_index_buffer(buffer.index_buffer.slice(..), IndexFormat::Uint32);
+		render_pass.draw_indexed(0..buffer.index_count as u32, 0, 0..1)
+	}
+}
+
+pub struct PolylineBuffer {
+	vertex_buffer: Buffer,
+	index_buffer: Buffer,
+	index_count: u32,
+}
+
+impl PolylineBuffer {
 	pub fn tessellate<'a>(&'a mut self, queue: &Queue, polylines: &[Polyline]) {
 		let mut vertices: Vec<Vert> = Vec::new();
 		let mut indices: Vec<u32> = Vec::new();
@@ -130,12 +135,16 @@ impl PolylineRenderer {
 		queue.write_buffer(&self.index_buffer, 0, &bytemuck::cast_slice(&indices));
 		self.index_count = indices.len() as u32;
 	}
+}
 
-	/// Assumes bind group 0 is global uniforms
-	pub fn render<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-		render_pass.set_pipeline(&self.pipeline);
-		render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-		render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint32);
-		render_pass.draw_indexed(0..self.index_count as u32, 0, 0..1)
-	}
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
+struct Vert {
+	position: [f32; 2],
+	color: [f32; 3],
+}
+
+impl Vert {
+	#[allow(dead_code)] //no, it's used, r-a
+	pub const LAYOUT: [wgpu::VertexAttribute; 2] = wgpu::vertex_attr_array![0 => Float2, 1 => Float3];
 }

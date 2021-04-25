@@ -5,12 +5,14 @@ use winit::dpi::PhysicalSize;
 
 use crate::asset_loader::AssetLoader;
 use crate::game::Game;
-use crate::window::GameWindow;
+use crate::render::PolylineBuffer;
 use crate::render::PolylineRenderer;
+use crate::window::GameWindow;
 
 pub struct GameRenderer {
 	pub bits: GameRendererBits,
 	pub polyline_renderer: PolylineRenderer,
+	pub background_line_buffer: PolylineBuffer,
 }
 
 impl GameRenderer {
@@ -18,8 +20,9 @@ impl GameRenderer {
 		let bits = GameRendererBits::new(game_window).await?;
 
 		let polyline_renderer = PolylineRenderer::new(&bits, asset_loader)?;
+		let background_line_buffer = polyline_renderer.make_buffers(&bits.device);
 
-		Ok(GameRenderer { bits, polyline_renderer })
+		Ok(GameRenderer { bits, polyline_renderer, background_line_buffer })
 	}
 
 	pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -31,7 +34,7 @@ impl GameRenderer {
 	}
 
 	pub fn setup(&mut self, game: &Game) {
-		self.polyline_renderer.tessellate(&self.bits.queue, &game.world.lines);
+		self.background_line_buffer.tessellate(&self.bits.queue, &game.world.lines);
 	}
 
 	pub fn render(&mut self, _game: &mut Game) -> std::result::Result<(), SwapChainError> {
@@ -54,8 +57,8 @@ impl GameRenderer {
 		// apply global uniforms
 		pass.set_bind_group(0, &self.bits.uniform_bind_group, &[]);
 
-		//render the scene
-		self.polyline_renderer.render(&mut pass);
+		//render the background of the scene
+		self.polyline_renderer.render_buffers(&mut pass, &self.background_line_buffer);
 
 		//all done. submit to the gpu
 		drop(pass);
