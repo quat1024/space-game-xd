@@ -39,7 +39,7 @@ impl PolylineRenderer {
 
 		let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
 			label: Some("Line pipeline layout"),
-			bind_group_layouts: &[],
+			bind_group_layouts: &[&game_renderer.uniform_bind_group_layout],
 			push_constant_ranges: &[],
 		});
 
@@ -77,18 +77,13 @@ impl PolylineRenderer {
 			multisample: Default::default(),
 		});
 
-		Ok(PolylineRenderer {
-		    vertex_buffer,
-			index_buffer,
-			index_count: 0,
-			pipeline,
-		})
+		Ok(PolylineRenderer { vertex_buffer, index_buffer, index_count: 0, pipeline })
 	}
 
 	pub fn tesselate<'a>(&'a mut self, queue: &Queue, polylines: &[Polyline]) {
 		let mut vertices: Vec<Vert> = Vec::new();
 		let mut indices: Vec<u32> = Vec::new();
-		
+
 		for polyline in polylines {
 			//Unfortunately I need a new path builder for each polyline
 			//lyon doesn't support setting the thickness or color per-stroke, as far as I can tell??
@@ -122,26 +117,27 @@ impl PolylineRenderer {
 				)
 				.expect("failed to tesselate");
 			}
-			
+
 			//since i'll be shoving these into the same buffer, adjust the index buffer to point here
 			//also map to u32 incase there's as hitton of lines (doubt it)
 			let vert_count = vertices.len() as u32;
 			let indices_u32 = tess_out.indices.into_iter().map(|x| (x as u32) + vert_count).collect::<Vec<_>>();
-			
+
 			vertices.extend_from_slice(&tess_out.vertices);
 			indices.extend_from_slice(&indices_u32);
 		}
-		
+
 		//great now fill the buffers on the GPU
 		queue.write_buffer(&self.vertex_buffer, 0, &bytemuck::cast_slice(&vertices));
 		queue.write_buffer(&self.index_buffer, 0, &bytemuck::cast_slice(&indices));
 		self.index_count = indices.len() as u32;
 	}
-	
-	pub fn render<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
+
+	pub fn render<'a>(&'a self, renderer_bits: &'a GameRendererBits, render_pass: &mut RenderPass<'a>) {
 		render_pass.set_pipeline(&self.pipeline);
 		render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
 		render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint32);
+		render_pass.set_bind_group(0, &renderer_bits.uniform_bind_group, &[]);
 		render_pass.draw_indexed(0..self.index_count as u32, 0, 0..1)
 	}
 }

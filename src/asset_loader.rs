@@ -10,9 +10,7 @@ pub struct AssetLoader {
 
 impl AssetLoader {
 	pub fn new<T: Into<PathBuf>>(path: T) -> Self {
-		AssetLoader {
-		    base_path: path.into(),
-		}
+		AssetLoader { base_path: path.into() }
 	}
 
 	pub fn create_shader_module(&self, device: &wgpu::Device, name: &str) -> Result<wgpu::ShaderModule> {
