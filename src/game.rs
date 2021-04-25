@@ -1,15 +1,14 @@
 use anyhow::*;
 
-use crate::asset_loader::AssetLoader;
-use crate::world::*;
+use crate::{asset_loader::AssetLoader, world::GameWorld};
 
 pub struct Game {
-	pub world: World,
+	pub world: GameWorld,
 }
 
 impl Game {
 	pub fn load(asset_loader: &AssetLoader) -> Result<Self> {
-		Ok(Game { world: World::load(asset_loader)? })
+		Ok(Game { world: GameWorld::load(asset_loader)? })
 	}
 
 	pub fn handle_input(&mut self, _event: &winit::event::WindowEvent) -> bool {
