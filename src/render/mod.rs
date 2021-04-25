@@ -37,7 +37,7 @@ impl GameRenderer {
 		let frame = self.bits.sc.get_current_frame()?.output;
 		let mut encoder = self.bits.device.create_command_encoder(&CommandEncoderDescriptor { label: None });
 
-		//allocates new vertex buffers every frame DONT DO THIS IN THE REAL GAME!!!! LOLLL
+		//Dont do this every frame in the real game, tessellation takes a (relative) ton of cpu power
 		use ultraviolet::Vec2;
 		use ultraviolet::Vec3;
 		let polyline = Polyline {
@@ -52,7 +52,7 @@ impl GameRenderer {
 			thickness: 80.0,
 		};
 
-		self.polyline_renderer.tesselate(&self.bits.queue, &[polyline2, polyline]);
+		self.polyline_renderer.tessellate(&self.bits.queue, &[polyline2, polyline]);
 		//////////////////////////////////////
 
 		//write uniforms (doesn't reallllly need to happen every frame, practically speaking it will, no harm)
@@ -67,12 +67,16 @@ impl GameRenderer {
 			}],
 			depth_stencil_attachment: None,
 		});
+		
+		// apply global uniforms
+		pass.set_bind_group(0, &self.bits.uniform_bind_group, &[]);
 
-		self.polyline_renderer.render(&self.bits, &mut pass);
+		//render the scene
+		self.polyline_renderer.render(&mut pass);
 
+		//all done. submit to the gpu
 		drop(pass);
 		self.bits.queue.submit(std::iter::once(encoder.finish()));
-
 		Ok(())
 	}
 }

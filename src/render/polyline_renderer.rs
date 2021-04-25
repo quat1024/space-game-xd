@@ -80,7 +80,7 @@ impl PolylineRenderer {
 		Ok(PolylineRenderer { vertex_buffer, index_buffer, index_count: 0, pipeline })
 	}
 
-	pub fn tesselate<'a>(&'a mut self, queue: &Queue, polylines: &[Polyline]) {
+	pub fn tessellate<'a>(&'a mut self, queue: &Queue, polylines: &[Polyline]) {
 		let mut vertices: Vec<Vert> = Vec::new();
 		let mut indices: Vec<u32> = Vec::new();
 
@@ -133,11 +133,11 @@ impl PolylineRenderer {
 		self.index_count = indices.len() as u32;
 	}
 
-	pub fn render<'a>(&'a self, renderer_bits: &'a GameRendererBits, render_pass: &mut RenderPass<'a>) {
+	/// Assumes bind group 0 is global uniforms
+	pub fn render<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
 		render_pass.set_pipeline(&self.pipeline);
 		render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
 		render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint32);
-		render_pass.set_bind_group(0, &renderer_bits.uniform_bind_group, &[]);
 		render_pass.draw_indexed(0..self.index_count as u32, 0, 0..1)
 	}
 }
